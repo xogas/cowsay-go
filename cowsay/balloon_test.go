@@ -21,43 +21,45 @@
  * SOFTWARE.
  */
 
-package assets
+package cowsay
 
 import (
-	"embed"
-	"sort"
-	"strings"
+	"testing"
 )
 
-//go:embed cows/*
-var cowsFS embed.FS
-
-// Asset loads and returns the asset for the given name.
-func Asset(path string) ([]byte, error) {
-	return cowsFS.ReadFile(path)
-}
-
-// AssetNames returns the names of all assets.
-func AssetNames() []string {
-	entries, err := cowsFS.ReadDir("cows")
-	if err != nil {
-		panic(err)
+func TestBuildBalloon(t *testing.T) {
+	tests := []struct {
+		name    string
+		msg     string
+		wrap    int
+		wantMsg string
+	}{
+		{
+			name:    "short message",
+			msg:     "hi",
+			wrap:    40,
+			wantMsg: " ____\n< hi >\n ----",
+		},
+		{
+			name:    "long message",
+			msg:     "aa bb cc dd ee",
+			wrap:    4,
+			wantMsg: " ____\n/ aa \\\n| bb  |\n| cc  |\n| dd  |\n\\ ee /\n ----",
+		},
+		{
+			name:    "full-width unicode handled correctly",
+			msg:     "你好",
+			wrap:    40,
+			wantMsg: " ______\n< 你好 >\n ------",
+		},
 	}
 
-	names := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			name := strings.TrimSuffix(entry.Name(), ".cow")
-			names = append(names, name)
-		}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := buildBalloon(tc.msg, tc.wrap)
+			if tc.wantMsg != string(got) {
+				t.Fatalf("expected message balloon, got: %q", string(got))
+			}
+		})
 	}
-	sort.Strings(names)
-	return names
-}
-
-var cowsInBinary = AssetNames()
-
-// CowInBinary returns the names of all cow assets in binary format.
-func CowInBinary() []string {
-	return cowsInBinary
 }

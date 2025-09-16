@@ -21,43 +21,33 @@
  * SOFTWARE.
  */
 
-package assets
+// Package appversion provides information about the build of the software.
+package appversion
 
 import (
-	"embed"
-	"sort"
-	"strings"
+	"bytes"
+	"fmt"
+	"runtime"
+	"text/tabwriter"
 )
 
-//go:embed cows/*
-var cowsFS embed.FS
+var (
+	AppVersion = "--"
+	GitCommit  = "--"
+	BuildTime  = "--"
+	GoVersion  = runtime.Version()
+)
 
-// Asset loads and returns the asset for the given name.
-func Asset(path string) ([]byte, error) {
-	return cowsFS.ReadFile(path)
-}
+// Info returns the version information of the software.
+func Info() []byte {
+	var buf bytes.Buffer
 
-// AssetNames returns the names of all assets.
-func AssetNames() []string {
-	entries, err := cowsFS.ReadDir("cows")
-	if err != nil {
-		panic(err)
-	}
+	w := tabwriter.NewWriter(&buf, 0, 0, 1, ' ', 0)
+	_, _ = fmt.Fprintf(w, "AppVersion:\t%s\n", AppVersion)
+	_, _ = fmt.Fprintf(w, "GitCommit:\t%s\n", GitCommit)
+	_, _ = fmt.Fprintf(w, "BuildTime:\t%s\n", BuildTime)
+	_, _ = fmt.Fprintf(w, "GoVersion:\t%s\n", GoVersion)
+	_ = w.Flush()
 
-	names := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			name := strings.TrimSuffix(entry.Name(), ".cow")
-			names = append(names, name)
-		}
-	}
-	sort.Strings(names)
-	return names
-}
-
-var cowsInBinary = AssetNames()
-
-// CowInBinary returns the names of all cow assets in binary format.
-func CowInBinary() []string {
-	return cowsInBinary
+	return buf.Bytes()
 }

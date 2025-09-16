@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2025 xogas <askxogas@gmail.com>
+ * Copyright (c) 2025 xogas <57179186+xogas@users.noreply.github.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,35 +21,33 @@
  * SOFTWARE.
  */
 
-// Package version provides information about the version of the software.
-package version
+package decoration
 
 import (
 	"bytes"
 	"fmt"
-	"runtime"
-	"text/tabwriter"
+	"unicode"
+	"unicode/utf8"
 )
 
-var (
-	AppVersion = "--"
-	GitCommit  = "--"
-	BuildTime  = "--"
-	GoVersion  = runtime.Version()
-)
-
-// Version returns the version information of the software.
-func Version() string {
+// Blob applies "blob" style decoration to the input text.
+func Blob(input []byte) []byte {
 	var buf bytes.Buffer
-	w := tabwriter.NewWriter(&buf, 0, 0, 1, ' ', 0)
 
-	fmt.Fprintf(w, "AppVersion:\t%s\n", AppVersion)
-	fmt.Fprintf(w, "GitCommit:\t%s\n", GitCommit)
-	fmt.Fprintf(w, "BuildTime:\t%s\n", BuildTime)
-	fmt.Fprintf(w, "GoVersion:\t%s\n", GoVersion)
-	if err := w.Flush(); err != nil {
-		return fmt.Sprintf("failed to format version: %v", err)
+	for len(input) > 0 {
+		rn, size := utf8.DecodeRune(input)
+		if rn == '\n' {
+			buf.WriteRune(rn)
+			input = input[size:]
+			continue
+		}
+		if unicode.IsSpace(rn) {
+			buf.WriteRune(rn)
+		} else {
+			fmt.Fprintf(&buf, "\x1b[1m%c\x1b[0m", rn)
+		}
+		input = input[size:]
 	}
 
-	return buf.String()
+	return buf.Bytes()
 }

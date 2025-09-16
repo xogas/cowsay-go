@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2025 xogas <askxogas@gmail.com>
+ * Copyright (c) 2025 xogas <57179186+xogas@users.noreply.github.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,4 +21,46 @@
  * SOFTWARE.
  */
 
-package decoration
+package decoration_test
+
+import (
+	"testing"
+
+	"github.com/xogas/cowsay-go/decoration"
+)
+
+func TestBlob(t *testing.T) {
+	tests := []struct {
+		name    string
+		msg     string
+		wantMsg string
+	}{
+		{
+			name:    "simple letters ans space",
+			msg:     "x y\n",
+			wantMsg: "\x1b[1mx\x1b[0m \x1b[1my\x1b[0m\n",
+		},
+		{
+			name:    "only whitespace preserved",
+			msg:     " \t\n",
+			wantMsg: " \t\n",
+		},
+		{
+			name:    "unicode full-width runes",
+			msg:     "你好\n",
+			wantMsg: "\x1b[1m你\x1b[0m\x1b[1m好\x1b[0m\n",
+		},
+		{
+			name:    "empty input",
+			msg:     "",
+			wantMsg: "",
+		},
+	}
+
+	for _, tc := range tests {
+		got := decoration.Blob([]byte(tc.msg))
+		if tc.wantMsg != string(got) {
+			t.Fatalf("Test %q failed: want %q, got %q", tc.name, tc.wantMsg, string(got))
+		}
+	}
+}

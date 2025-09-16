@@ -21,43 +21,38 @@
  * SOFTWARE.
  */
 
-package assets
+package decoration_test
 
 import (
-	"embed"
-	"sort"
-	"strings"
+	"testing"
+
+	"github.com/xogas/cowsay-go/decoration"
 )
 
-//go:embed cows/*
-var cowsFS embed.FS
-
-// Asset loads and returns the asset for the given name.
-func Asset(path string) ([]byte, error) {
-	return cowsFS.ReadFile(path)
-}
-
-// AssetNames returns the names of all assets.
-func AssetNames() []string {
-	entries, err := cowsFS.ReadDir("cows")
-	if err != nil {
-		panic(err)
+func TestRainbow(t *testing.T) {
+	tests := []struct {
+		name    string
+		msg     string
+		wantMsg string
+	}{
+		{
+			name:    "simple letters ans space",
+			msg:     "x y\n",
+			wantMsg: "\x1b[38;2;171;209;2mx\x1b[0m \x1b[38;2;233;136;13my\x1b[0m\n",
+		},
+		{
+			name:    "empty input",
+			msg:     "",
+			wantMsg: "",
+		},
 	}
 
-	names := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			name := strings.TrimSuffix(entry.Name(), ".cow")
-			names = append(names, name)
-		}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := decoration.Rainbow([]byte(tc.msg))
+			if tc.wantMsg != string(got) {
+				t.Fatalf("decoration.Rainbow(%q) = %q, want %q", tc.msg, got, tc.wantMsg)
+			}
+		})
 	}
-	sort.Strings(names)
-	return names
-}
-
-var cowsInBinary = AssetNames()
-
-// CowInBinary returns the names of all cow assets in binary format.
-func CowInBinary() []string {
-	return cowsInBinary
 }

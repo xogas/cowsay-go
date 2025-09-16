@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2025 xogas <askxogas@gmail.com>
+ * Copyright (c) 2025 xogas <57179186+xogas@users.noreply.github.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,17 +21,23 @@
  * SOFTWARE.
  */
 
-package cow
+package appversion
 
-// LocationType indicates the type of path containing cow files.
-type LocationType int
-
-const (
-	InBinary LocationType = iota
-	InUserDir
+import (
+	"fmt"
+	"runtime"
+	"testing"
 )
 
-type line struct {
-	text      string
-	runeWidth int
+func TestInfo(t *testing.T) {
+	version := runtime.Version()
+
+	wantMsg := fmt.Sprintf(
+		"AppVersion: --\nGitCommit:  --\nBuildTime:  --\nGoVersion:  %s\n",
+		version,
+	)
+
+	if wantMsg != string(Info()) {
+		t.Fatalf("Info() = %q, want %q", Info(), wantMsg)
+	}
 }

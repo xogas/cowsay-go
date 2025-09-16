@@ -21,43 +21,62 @@
  * SOFTWARE.
  */
 
-package assets
+package decoration
 
 import (
-	"embed"
-	"sort"
-	"strings"
+	"bytes"
+	"fmt"
+	"math"
+	"unicode"
+	"unicode/utf8"
 )
 
-//go:embed cows/*
-var cowsFS embed.FS
+const (
+	freq       = 0.35
+	redPhase   = 0
+	greenPhase = math.Pi * 2 / 3
+	bluePhase  = math.Pi * 4 / 3
+	step       = 0.9
+	offset     = 3.5
+)
 
-// Asset loads and returns the asset for the given name.
-func Asset(path string) ([]byte, error) {
-	return cowsFS.ReadFile(path)
+// rgb returns 1...255 r,g,b for position p.
+func rgb(i float64) (red, green, blue int64) {
+	red = int64(math.Sin(freq*i+redPhase)*127 + 128)
+	green = int64(math.Sin(freq*i+greenPhase)*127 + 128)
+	blue = int64(math.Sin(freq*i+bluePhase)*127 + 128)
+	return
 }
 
-// AssetNames returns the names of all assets.
-func AssetNames() []string {
-	entries, err := cowsFS.ReadDir("cows")
-	if err != nil {
-		panic(err)
-	}
+// Rainbow applies rainbow colors to the input text.
+func Rainbow(input []byte) []byte {
+	var buf bytes.Buffer
+	lineIndex := 0
+	pos := float64(lineIndex)*offset + 1
 
-	names := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			name := strings.TrimSuffix(entry.Name(), ".cow")
-			names = append(names, name)
+	for len(input) > 0 {
+		rn, size := utf8.DecodeRune(input)
+		if rn == '\n' {
+			lineIndex++
+			pos = float64(lineIndex)*offset + 1
+			buf.WriteRune(rn)
+			input = input[size:]
+			continue
 		}
+		if unicode.IsSpace(rn) {
+			buf.WriteRune(rn)
+			input = input[size:]
+			pos += step
+			continue
+		}
+
+		r, g, b := rgb(pos)
+
+		fmt.Fprintf(&buf, "\x1b[38;2;%d;%d;%dm%c\x1b[0m", r, g, b, rn)
+
+		pos += step
+		input = input[size:]
 	}
-	sort.Strings(names)
-	return names
-}
 
-var cowsInBinary = AssetNames()
-
-// CowInBinary returns the names of all cow assets in binary format.
-func CowInBinary() []string {
-	return cowsInBinary
+	return buf.Bytes()
 }
